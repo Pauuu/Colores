@@ -3,6 +3,7 @@ package colores;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
@@ -20,12 +21,19 @@ public class Ventana extends JFrame implements ActionListener {
 
     public Ventana() {
         this.mostrarVentana();
-        this.lienzo1.loadImage();
-        this.lienzo1.doFadeOut("img/fondo5");
+        
+        //añadida imagen original
+        //this.lienzoOriginal.printImage("img/fondo5.jpeg");
+
+        //añadida imagen para modificar
+        this.lienzo1.printImage("img/fondo5.jpeg");
+        
+        //test para hacer el fundido
+        this.lienzo1.showFadeOut("img/fondo4.jpeg", 10, 100);
     }
     
     public void mostrarVentana() {
-        this.setSize(1200, 1000);
+        this.setSize(1500, 1000);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.panel = new JPanel(new GridBagLayout());
 
@@ -44,25 +52,28 @@ public class Ventana extends JFrame implements ActionListener {
     }
 
     public void addLienzoOriginal() {
-
+        
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0;
         c.gridy = 0;
+        c.insets = new Insets(10, 10, 10, 10);
+        
 
-        this.lienzoOriginal = new Lienzo();
-        this.lienzoOriginal.setSize(500, 500);
+        this.lienzoOriginal = new Lienzo(this);
+        this.lienzoOriginal.setSize(700, 700);
 
         this.panel.add(lienzoOriginal, c);
     }
 
     public void addLienzo1() {
+        
 
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 1;
         c.gridy = 0;
 
-        this.lienzo1 = new Lienzo();
-        this.lienzo1.setSize(500, 500);
+        this.lienzo1 = new Lienzo(this);
+        this.lienzo1.setSize(700, 700);
 
         this.panel.add(lienzo1, c);
     }
@@ -131,12 +142,6 @@ public class Ventana extends JFrame implements ActionListener {
 
         } else if (this.jbBrightness == e.getSource()) {
            this.lienzo1.modifyBrightness(20);
-            
-        } else if (this.jbRestoreImg == e.getSource()){
-            this.lienzo1.restoreImg();
-            
-        } else if (this.jbRestoreImg == e.getSource()){
-            this.lienzo1.restoreImg();
         }
 
         this.lienzo1.repaint();

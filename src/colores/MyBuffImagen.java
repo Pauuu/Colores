@@ -4,16 +4,14 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MyBuffImagen {
 
     private Lienzo lienzo;
-    private byte[] baRaster;
+    
     private BufferedImage imagen;
-    private Integer[] iaRasterOriginal;
-    private Integer[] iaRaster;
+    private byte[] baRaster; 
+    private Integer[] iaRasterSrc;
     private Raster rastDataImg;
 
     public MyBuffImagen(BufferedImage imgSource) {
@@ -24,14 +22,13 @@ public class MyBuffImagen {
         this.rastDataImg = this.imagen.getRaster();
 
         //obtiene la informacion del array de bytes del raster
-        this.baRaster = this.copyDataRasterToByteArray(this.rastDataImg);
+        this.baRaster = this.convertDataRasterToByteArray(this.rastDataImg);
 
         //convierte el baRaster en un array de integers y guarda el original
-        this.iaRasterOriginal = this.copyByteArrayToIntArray(this.baRaster);
-        this.iaRasterOriginal = this.copyByteArrayToIntArray(this.baRaster);
+        this.iaRasterSrc = this.convertByteArrayToIntArray(this.baRaster);
     }
 
-    public byte[] copyDataRasterToByteArray(Raster ras) {
+    public byte[] convertDataRasterToByteArray(Raster ras) {
 
         byte[] baDataRasterSource;
 
@@ -53,36 +50,13 @@ public class MyBuffImagen {
         }
 
         return isCopy;
+    }    
+    
+    public BufferedImage getBufferedImg(){
+        return this.imagen;
     }
 
-    public void getDiff(BufferedImage imgSource, BufferedImage imgTrans) throws InterruptedException {
-        Raster rastSource = imgSource.getRaster();
-        Raster rastTrans = imgTrans.getRaster();
-
-        byte[] baSource = this.copyDataRasterToByteArray(rastSource);
-        byte[] baTrans = this.copyDataRasterToByteArray(rastTrans);
-
-        Integer[] iaSource = this.copyByteArrayToIntArray(baSource);
-        Integer[] iaTrans = this.copyByteArrayToIntArray(baTrans);
-        Integer[] iaDiff = new Integer[iaSource.length];
-
-        for (int posicion = 0; posicion < iaSource.length; posicion++) {
-            iaDiff[posicion] = (iaTrans[posicion] - iaSource[posicion]) / 10;
-        }
-        
-        for (int i = 0; i < 10; i++) {
-            for (int pos = 0; pos < iaDiff.length; pos++) {
-                iaSource[pos] += iaDiff[pos];
-            }
-            
-            Thread.sleep(100);
-            
-        }
-    }
-    
-    
-
-    public Integer[] copyByteArrayToIntArray(byte[] baSource) {
+    public Integer[] convertByteArrayToIntArray(byte[] baSource) {
 
         Integer[] isCopy = new Integer[baSource.length];
 
@@ -92,26 +66,48 @@ public class MyBuffImagen {
 
         return isCopy;
     }
+    
+    public void doFadeOut(BufferedImage imgFade, int numFrames){
+        
+        Raster rasFade = imgFade.getRaster();
+        byte[] baFade = this.convertDataRasterToByteArray(rasFade);
+        Integer[] iaFader = this.convertByteArrayToIntArray(baFade);
+        
+        Integer[] iaDifferencia = new Integer[iaFader.length];
+        
+        for (int pos = 0; pos < iaFader.length; pos++){
+            iaDifferencia[pos] = (iaFader[pos] - iaRasterSrc[pos]) / numFrames;
+        }
+        
+        for (int i = 0; i < 0; i++) {
+            this.iaRasterSrc[i] += iaDifferencia[i];
+            
+        }
+        
+        this.updateBaRaster(this.iaRasterSrc);
+    }
+    
+    
 
     public void modifyBrightness(int valor) {
 
-        for (int i = 0; i < this.iaRasterOriginal.length; i++) {
-            this.iaRasterOriginal[i] += valor;
+        for (int i = 0; i < this.iaRasterSrc.length; i++) {
+            this.iaRasterSrc[i] += valor;
 
-            if (this.iaRasterOriginal[i] > 255) {
-                this.iaRasterOriginal[i] = 255;
+            if (this.iaRasterSrc[i] > 255) {
+                this.iaRasterSrc[i] = 255;
 
-            } else if (this.iaRasterOriginal[i] < 0) {
+            } else if (this.iaRasterSrc[i] < 0) {
                 this.baRaster[i] = 0;
             }
         }
 
-        this.updateBaRaster(iaRasterOriginal);
+        this.updateBaRaster(iaRasterSrc);
     }
 
     public void restoreOriginal() {
 
-        this.updateBaRaster(iaRasterOriginal);
+        this.updateBaRaster(iaRasterSrc);
     }
 
     public void showSquare(int posX, int posY, int anchura, int altura) {
@@ -128,34 +124,28 @@ public class MyBuffImagen {
 
             for (int col = colInicial; col < row + ((x + anchura)) * 3; col += 3) {
 
-                this.iaRasterOriginal[col] = 20;
-                this.iaRasterOriginal[col + 1] = 50;
-                this.iaRasterOriginal[col + 2] = 200;
+                this.iaRasterSrc[col] = 20;
+                this.iaRasterSrc[col + 1] = 50;
+                this.iaRasterSrc[col + 2] = 200;
             }
         }
 
-        this.updateBaRaster(this.iaRasterOriginal);
+        this.updateBaRaster(this.iaRasterSrc);
     }
 
     public void toGrey() {
         int media;
-        for (int i = 0; i < this.iaRasterOriginal.length; i += 3) {
-            media = (this.iaRasterOriginal[i]
-                    + this.iaRasterOriginal[i + 1]
-                    + this.iaRasterOriginal[i + 2]) / 3;
+        for (int i = 0; i < this.iaRasterSrc.length; i += 3) {
+            media = (this.iaRasterSrc[i]
+                    + this.iaRasterSrc[i + 1]
+                    + this.iaRasterSrc[i + 2]) / 3;
 
-            this.iaRasterOriginal[i] = media;
-            this.iaRasterOriginal[i + 1] = media;
-            this.iaRasterOriginal[i + 2] = media;
+            this.iaRasterSrc[i] = media;
+            this.iaRasterSrc[i + 1] = media;
+            this.iaRasterSrc[i + 2] = media;
         }
 
-        this.updateBaRaster(this.iaRasterOriginal);
-    }
-
-    public void toYellow() {
-        for (int i = 0; i < baRaster.length; i++) {
-            byte b = baRaster[i];
-        }
+        this.updateBaRaster(this.iaRasterSrc);
     }
 
     /////////////////////////////////////////
